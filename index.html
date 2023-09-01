@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management Tool_2</title>
+    <style>
+        /* Style for list items */
+        li {
+            margin-bottom: 10px; /* Add some space between list items */
+            padding: 10px; /* Add padding to the list items */
+            border: 1px solid #ccc; /* Add a border to the list items */
+            border-radius: 5px; /* Add rounded corners to the list items */
+        }
+
+        /* Style for the "Buy" buttons */
+        button {
+            margin-right: 10px; /* Add space between the buttons */
+            background: rgb(156, 156, 192);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover{
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #ccc;
+            color: red;
+            opacity: .6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <form id="myForm" onsubmit="handleData(event)">
+            <label for="candy">Candy</label>
+            <input type="text" id="candy">
+            <label for="desc">Desc</label>
+            <input type="text" id="desc">
+            <label for="price">Price</label>
+            <input type="number" id="price">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity">
+            <input class="btn" type="submit" value="Submit">
+        </form>
+        <div>
+            <ul id="itemList">
+                <!-- Remove the static li element -->
+            </ul>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+        <script>
+            let url="https://crudcrud.com/api/74e7343696014fdab56c922f3a644dff/stocks_Info";
+
+            function fetchData() {
+                // Fetch data from the cloud
+                axios.get(url).then((res) => {
+                    const data = res.data;
+                    const itemList = document.getElementById("itemList");
+
+                    // Clear existing list items
+                    itemList.innerHTML = "";
+
+                    // Loop through the data and create list items
+                    data.forEach((item) => {
+                        const listItem = document.createElement("li");
+                        listItem.innerHTML = `
+                            <b>Candy:</b> ${item.item} , 
+                            <b>Description:</b> ${item.desc} , 
+                            <b>Price: </b> ${item.price}, 
+                            <b>Quantity:</b> <span id="quantityDisplay">${item.quantity}</span>
+                            <button type="button" onclick="buy(${item.id}, 1)">Buy 1</button>
+                            <button type="button" onclick="buy(${item.id}, 2)">Buy 2</button>
+                            <button type="button" onclick="buy(${item.id}, 3)">Buy 3</button>
+                            <button onclick="deleteItem(${item.id})">Delete</button>`;
+                        itemList.appendChild(listItem);
+                    });
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+
+            fetchData(); // Fetch data initially
+
+            function handleData(e) {
+                e.preventDefault();
+                
+                let item = document.getElementById("candy").value;
+                let desc = document.getElementById('desc').value;
+                let price = document.getElementById('price').value;
+                let quantity = parseInt(document.getElementById('quantity').value);
+                
+                const obj = {
+                    item,
+                    desc,
+                    price,
+                    quantity
+                };
+
+                // Create a new item in the cloud
+                axios.post(url, obj).then((response) => {
+                    console.log(response);
+                    fetchData(); // Refresh the list after adding a new item
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+
+            function buy(id, quantityToBuy) {
+                // Fetch the item from the cloud by its ID
+                axios.get(`${url}/${id}`).then((res) => {
+                    const item = res.data;
+                    if (item.quantity >= quantityToBuy) {
+                        item.quantity -= quantityToBuy;
+                        
+                        // Update the item in the cloud
+                        axios.put(`${url}/${id}`, item).then(() => {
+                            fetchData(); // Refresh the list after updating the quantity
+                        }).catch((err) => {
+                            console.log(err);
+                        });
+                    } else {
+                        alert("Not enough stock!");
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+
+            function deleteItem(id) {
+                // Delete the item from the cloud by its ID
+                axios.delete(`${url}/${id}`).then(() => {
+                    fetchData(); // Refresh the list after deleting the item
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>
 
